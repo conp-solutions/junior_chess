@@ -1,0 +1,37 @@
+
+# Installation / Setup
+
+Check system NodeJS installation
+
+```
+node -v
+npm -v
+```
+
+Create application
+
+```
+npx create-react-app junior_chess
+```
+
+Install dependencies
+
+```
+npm install react-chessboard chess.js
+```
+
+
+# Trouble Shooting
+
+### React Native Error: ENOSPC: System limit for number of file watchers reached
+
+Too many tasks want to watch files. Quickfix: increase number of allowed watches.
+https://stackoverflow.com/questions/55763428/react-native-error-enospc-system-limit-for-number-of-file-watchers-reached
+
+```
+# insert the new value into the system config
+echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
+
+# check that the new value was applied
+cat /proc/sys/fs/inotify/max_user_watches
+```
