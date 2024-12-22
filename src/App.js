@@ -39,6 +39,7 @@ const App = () => {
   // State variables for chess game logic, Stockfish worker, best move, and evaluation
   const [gameState, setgameState] = useState("loading");  // loading, playing, gameOver -- to indicate state
   const [game, setGame] = useState(new Chess()); // Chess game instance
+  const [startingFen, setStartingFen] = useState(""); // FEN with which we started the game
   const [stockfish, setStockfish] = useState(null); // Stockfish Web Worker instance
   const [bestMove, setBestMove] = useState(""); // Best move suggested by Stockfish
   const [evaluation, setEvaluation] = useState(""); // Evaluation of the position by Stockfish
@@ -122,6 +123,7 @@ const App = () => {
       setComputerMoves(Math.random() < 0.5 ? "white" : "black")
     }
     setgameState("playing");
+    setStartingFen(startFen)
     reset_game(startFen);
   };
 
@@ -503,8 +505,9 @@ const App = () => {
           showEvaluation && <p>Position Score: {evaluation}</p>
         }
         <h3>Game Settings</h3>
-        <button style={{ "padding": "2px", "margin": "2px" }} onClick={() => reset_game()}>Reset Game</button>
+        <button style={{ "padding": "2px", "margin": "2px" }} onClick={() => reset_game(startingFen)}>Reset Game</button>
         <button style={{ "padding": "2px", "margin": "2px" }} onClick={() => toggleComputerMoves()}>Computer moves: {computerMoves}</button>
+        <button style={{ "padding": "2px", "margin": "2px" }} onClick={() => {reset_game(); setgameState("loading")}}>New Game</button>
         <details><summary>State and History</summary>
 
           <p><b>Move Number: {game.moveNumber()}</b></p>
