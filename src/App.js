@@ -79,6 +79,8 @@ const App = () => {
   if (chessPositoinMoves.current === null) chessPositoinMoves.current = new ChessPositionMoves();
   const [botStrategy, setBotStrategy] = useState(AVAILABLE_BOTS[0]);
 
+  const [movesToPlay, setMovesToPlay] = useState(-1)
+
   // TODO: implement analysis mode with showing best N moves, turned into link with FEN game and how to continue
   // TODO: make short cut game mode settings (color, depth, fav figure, move to select)
 
@@ -118,9 +120,14 @@ const App = () => {
     initializeGame() // set values from new state
   };
 
-  const startGame = (startFen = "") => {
+  const startGame = (startFen = "", maxMoves = 0) => {
     if (computerMoves === "random") {
       setComputerMoves(Math.random() < 0.5 ? "white" : "black")
+    }
+    if (maxMoves !== "" && maxMoves !== 0) {
+      setMovesToPlay(Math.floor(maxMoves))
+    } else {
+      setMovesToPlay(-1)
     }
     setgameState("playing");
     setStartingFen(startFen)
@@ -207,6 +214,8 @@ const App = () => {
         console.debug("No move available yet");
       }
     }
+
+    /* TODO: check new game state for being a draw! */
   }
 
   const getMoveFromStockfish = (game) => {
@@ -255,12 +264,17 @@ const App = () => {
 
   const updateStateBaseOnGame = (game) => {
     setGame(game);
+
     if (game.isDraw()) {
       setgameState("draw")
     } else {
       if (game.isGameOver()) {
         setgameState("gameOver");
       }
+    }
+
+    if (movesToPlay === 0 && gameState === "playing") {
+      setgameState("allmoved")
     }
   }
 
@@ -295,6 +309,10 @@ const App = () => {
       // If the move is invalid, return false to prevent it
       if (move === null) {
         return false;
+      }
+
+      if(game.turn() === "w") {
+        if (movesToPlay > 0) setMovesToPlay(movesToPlay - 1)
       }
 
       // only switch timers in case of a valid move
@@ -371,7 +389,7 @@ const App = () => {
       <b>Computer</b>{botStrategy.botSymbol} moves <b>{computerMoves} pieces.</b>
       <b>White</b> time {whiteTimeMS / 60000} + {whiteIncrementMS / 1000} and black time {blackTimeMS / 60000} + {blackIncrementMS / 1000}.
       <h2>Modify Game</h2>
-      <button style={{ "padding": "2px", "margin": "2px" }} onClick={() => startGame(document.getElementById("fen").value)}>▶ Start</button>
+      <button style={{ "padding": "2px", "margin": "2px" }} onClick={() => startGame(document.getElementById("fen").value, document.getElementById("move_numbers").value)}>▶ Start</button>
       <button style={{ "padding": "2px", "margin": "2px" }} onClick={() => toggleComputerMoves()}>⟳ Change Computer</button>
       <div>
         <p>
@@ -388,6 +406,9 @@ const App = () => {
               ))}
             </select>
           </label>
+        </p>
+        <p>
+          Maximal Moves: <input type="number" min="0" id="move_numbers" name="max_moves" placeholder="number of moves" /><button style={{ "padding": "2px", "margin": "2px" }} onClick={() => document.getElementById("move_numbers").value = ""}>Unlimited</button>
         </p>
       </div>
       <details><summary><strong>Start from Position</strong></summary>
@@ -470,13 +491,15 @@ const App = () => {
     <div style={{ "padding": "5 vmin", "margin": "10%", "textAlign": "left", "background-color": "#eeeeee" }}>
       <h1>{APPNAME} Game</h1>
       <section>
-        <div>
-          <p>Black Time: {blackTimerString}</p>
+        <div id="board_tag">
+          <p>Black Time: {blackTimerString}
+          {computerMoves === "black" && <b>Moving by bot {botStrategy.botSymbol} {botStrategy.botName}</b>}
+          </p>
           {/* Chessboard component with custom pieces, square styles, and custom arrow */}
           <Chessboard
             position={game.fen()} // Current position from the game state
             onPieceDrop={onDrop} // Function to handle piece drops // TODO: how to handle selected promotion piece?!
-            boardWidth={500} // Width of the chessboard in pixels
+            boardWidth={Math.min(500, document.documentElement.clientWidth * 0.8)} // Width of the chessboard in pixels
             // customPieces={customPieces} // Custom pieces mapping
             // customLightSquareStyle={lightSquareStyle} // Apply custom light square style
             // customDarkSquareStyle={darkSquareStyle} // Apply custom dark square style
@@ -484,8 +507,13 @@ const App = () => {
             customArrows={showBestMove ? bestMoveArrow : undefined} // Draws the best move arrow on the board
             customArrowColor={showBestMove ? arrowColor : undefined} // Set the custom arrow color
           />
-          <p>White Time: {whiteTimerString}</p>
+          <p>White Time: {whiteTimerString}
+          { computerMoves === "white" && <b>Moving by bot {botStrategy.botSymbol} {botStrategy.botName}</b>}
+          </p>
         </div>
+        {
+          movesToPlay > -1 && <p>Remaining Moves: {movesToPlay}</p>
+        }
       </section>
       {/* Display the best move and evaluation score */}
       {/* Display gameover*/
@@ -493,6 +521,9 @@ const App = () => {
       }
       {/* Display gameover*/
         gameState === "draw" && <h3>Game Over: draw!</h3>
+      }
+      {
+        gameState === "allmoved" && <h3>Game Over: run all moves!</h3>
       }
       <div>
         {
