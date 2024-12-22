@@ -396,7 +396,7 @@ const App = () => {
         <p>
           <button onClick={() => document.getElementById("fen").value = "2k5/8/8/8/8/8/3Q4/4K3 w - - 0 22"}>Queen♕</button>
           <button onClick={() => document.getElementById("fen").value = "2k5/8/8/8/8/8/3R4/4K3 w - - 0 22"}>Rook♖</button>
-          <button onClick={() => document.getElementById("fen").value = "2k5/8/8/8/8/8/3P4/4K3 w - - 0 22"}>Rook♖</button>
+          <button onClick={() => document.getElementById("fen").value = "2k5/8/8/8/8/8/3P4/4K3 w - - 0 22"}>Pawn♙</button>
           <button onClick={() => document.getElementById("fen").value = "2k5/8/8/8/8/8/3NB3/4K3 w - - 0 22"}>Bishop♗ + Knight♘</button>
           <button onClick={() => document.getElementById("fen").value = "2k5/8/8/8/8/8/3BB3/4K3 w - - 0 22"}>Bishop♗ + Bishop♗</button>
           <button onClick={() => document.getElementById("fen").value = "2k5/1r6/8/8/8/8/3Q4/4K3 w - - 0 22"}>Queen♕ vs Rook♖</button>
