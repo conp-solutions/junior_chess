@@ -255,11 +255,11 @@ const App = () => {
 
   const updateStateBaseOnGame = (game) => {
     setGame(game);
-    if (game.isGameOver()) {
-      setgameState("gameOver");
+    if (game.isDraw()) {
+      setgameState("draw")
     } else {
-      if (game.isDraw()) {
-        setgameState("draw")
+      if (game.isGameOver()) {
+        setgameState("gameOver");
       }
     }
   }
