@@ -394,13 +394,13 @@ const App = () => {
         <button onClick={() => document.getElementById("fen").value = ""}>Plain Game</button>
         <h4>End Games</h4>
         <p>
-          <button onClick={() => document.getElementById("fen").value = "2k5/8/8/8/8/8/3Q4/4K3 w KQkq - 0 2"}>Queen♕</button>
-          <button onClick={() => document.getElementById("fen").value = "2k5/8/8/8/8/8/3R4/4K3 w KQkq - 0 2"}>Rook♖</button>
-          <button onClick={() => document.getElementById("fen").value = "2k5/8/8/8/8/8/3P4/4K3 w KQkq - 0 2"}>Rook♖</button>
-          <button onClick={() => document.getElementById("fen").value = "2k5/8/8/8/8/8/3NB3/4K3 w KQkq - 0 2"}>Bishop♗ + Knight♘</button>
-          <button onClick={() => document.getElementById("fen").value = "2k5/8/8/8/8/8/3BB3/4K3 w KQkq - 0 2"}>Bishop♗ + Bishop♗</button>
-          <button onClick={() => document.getElementById("fen").value = "2k5/1r6/8/8/8/8/3Q4/4K3 w KQkq - 0 2"}>Queen♕ vs Rook♖</button>
-          <button onClick={() => document.getElementById("fen").value = "2k5/3r4/8/8/8/8/3PR3/4K3 w KQkq - 0 2"}>Rook♖+Pawn♙ vs Rook♖</button>
+          <button onClick={() => document.getElementById("fen").value = "2k5/8/8/8/8/8/3Q4/4K3 w - - 20 22"}>Queen♕</button>
+          <button onClick={() => document.getElementById("fen").value = "2k5/8/8/8/8/8/3R4/4K3 w - - 20 22"}>Rook♖</button>
+          <button onClick={() => document.getElementById("fen").value = "2k5/8/8/8/8/8/3P4/4K3 w - - 20 22"}>Rook♖</button>
+          <button onClick={() => document.getElementById("fen").value = "2k5/8/8/8/8/8/3NB3/4K3 w - - 20 22"}>Bishop♗ + Knight♘</button>
+          <button onClick={() => document.getElementById("fen").value = "2k5/8/8/8/8/8/3BB3/4K3 w - - 20 22"}>Bishop♗ + Bishop♗</button>
+          <button onClick={() => document.getElementById("fen").value = "2k5/1r6/8/8/8/8/3Q4/4K3 w - - 20 22"}>Queen♕ vs Rook♖</button>
+          <button onClick={() => document.getElementById("fen").value = "2k5/3r4/8/8/8/8/3PR3/4K3 w - - 20 22"}>Rook♖+Pawn♙ vs Rook♖</button>
         </p>
         <h4>Full FEN</h4>
         <p>
