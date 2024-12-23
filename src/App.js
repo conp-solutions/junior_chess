@@ -6,6 +6,7 @@ import { Timer } from "./Timer.js"
 import { MoveHistory, ChessMove, StructuredMove } from "./MoveHistory.js";
 import { AVAILABLE_BOTS, parseStockfishMessage, ChessPositionMoves, BotStrategy, ChessPositionMove } from "./ChessBot.js"
 
+import './App.css';
 
 const APPNAME = "Junior Chess"
 const INTERVAL_MS = 123
@@ -383,7 +384,7 @@ const App = () => {
   };
 
   if (gameState === "loading") return (
-    <div style={{ "padding": "5 vmin", "margin": "10%", "textAlign": "left", "background-color": "#dddddd" }}>
+    <div style={{ "padding": "5 vmin", "textAlign": "left", "background-color": "#dddddd", "margin": "0 auto", }}>
       <h1>{APPNAME} Game</h1>
       <h2>Setup</h2>
       <b>Computer</b>{botStrategy.botSymbol} moves <b>{computerMoves} pieces.</b>
@@ -488,7 +489,7 @@ const App = () => {
 
     </div>)
   else return (
-    <div style={{ "padding": "5 vmin", "margin": "10%", "textAlign": "left", "background-color": "#eeeeee" }}>
+    <div style={{ "padding": "5 vmin", "textAlign": "left", "background-color": "#eeeeee", "margin": "0 auto", }}>
       <h1>{APPNAME} Game</h1>
       <section>
         <div id="board_tag">
