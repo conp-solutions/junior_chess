@@ -1,4 +1,4 @@
-import { Chess, QUEEN, BISHOP, KNIGHT, KING } from "chess.js"; // Import the Chess library for game logic
+import { Chess, QUEEN, BISHOP, KNIGHT, KING, WHITE, BLACK } from "chess.js"; // Import the Chess library for game logic
 import { StructuredMove } from "./MoveHistory.js";  // The way we use moves
 
 export class ChessPositionMove {
@@ -84,7 +84,6 @@ export class BotStrategy {
       }
     }
 
-
     // select a move based on the given position moves
     if (this.useBestMove) {
       // If useBestMove is true, return the best move
@@ -129,6 +128,36 @@ export class BotStrategy {
     }
 
     // TODO: implement favorite opening moves
+    let pickedMove = null;
+    if (this.whiteMoves.length > 0 && game.turn() === WHITE) {
+      console.debug("Selecting opening move for white from ", this.whiteMoves.length, " moves on move ", game.moveNumber());
+      for (const [i, move] of this.whiteMoves.entries()) {
+        for (const [j, chessPositionMove] of acceptableMoves.entries()) {
+          if (move === chessPositionMove.move) {
+            pickedMove = chessPositionMove;
+            break
+          }
+        }
+      }
+    } else if (this.blackMoves.length > 0 && game.turn() === BLACK) {
+      console.debug("Selecting opening move for black from ", this.blackMoves.length, " moves on move ", game.moveNumber());
+      for (const [i, move] of this.blackMoves.entries()) {
+        for (const [j, chessPositionMove] of acceptableMoves.entries()) {
+          if (move === chessPositionMove.move) {
+            pickedMove = chessPositionMove;
+            break
+          }
+        }
+      }
+    }
+
+    if (pickedMove !== null) {
+      let returnmove = new StructuredMove(pickedMove.move.slice(0, 2), pickedMove.move.slice(2, 4), QUEEN, takenTimeMS)
+      console.debug("Return requested opening move: ", returnmove, " for playing in game state with turn ", game.turn())
+      return returnmove
+    }
+
+
 
     if (this.preferredPiece.length > 0) {
       let preferredMoves = [];
@@ -227,7 +256,7 @@ export const parseStockfishMessage = (message, turn) => {
 
 
 export const AVAILABLE_BOTS = [
-  new BotStrategy("househorse", "🐎", false, 3, 20, [], [], 2.0, 5.0, 0.1, [BISHOP]), // Chess bot strategy
+  new BotStrategy("househorse", "🐎", false, 3, 20, ["e2e4","f2f4"], ["e7e6"], 2.0, 5.0, 0.1, [BISHOP]), // Chess bot strategy
   new BotStrategy("sauropod", "🦕", false, 7, 15, [], [], 2.0, 5.0, 0.1, [QUEEN]), // bad, move queen a lot
   new BotStrategy("chicken", "🐣", false, 4, 10, [], [], 2.0, 5.0, 0.2, [KNIGHT]),
   new BotStrategy("fly", "🪰", false, 3, 10, [], [], 2.0, 5.0, [KING, QUEEN]), // Fly bot strategy
