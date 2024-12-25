@@ -36,6 +36,35 @@ function useInterval(callback, delay) {
 // define supported versions of stockfish
 const stockfishVersions = ["stockfish-16.1-lite-single.js"];
 
+class GameMoves {
+  /* Memorize numbers of moves to play */
+  constructor(numMoves = null) {
+    this.currentMove = 0;
+    this.initialValue = numMoves;
+    this.reset()
+  }
+
+  reset() {
+    if (this.initialValue === null) return;
+    this.currentMove = this.initialValue;
+  }
+
+  decrement() {
+    if (this.initialValue === null) return;
+    this.currentMove -= 1;
+  }
+
+  expired() {
+    if (this.initialValue === null) return false;
+    return this.currentMove <= 0;
+  }
+
+  value() {
+    if (this.initialValue === null) return null;
+    return this.currentMove;
+  }
+}
+
 const App = () => {
   // State variables for chess game logic, Stockfish worker, best move, and evaluation
   const [gameState, setgameState] = useState("loading");  // loading, playing, gameOver -- to indicate state
@@ -80,7 +109,10 @@ const App = () => {
   if (chessPositoinMoves.current === null) chessPositoinMoves.current = new ChessPositionMoves();
   const [botStrategy, setBotStrategy] = useState(AVAILABLE_BOTS[0]);
 
-  const [movesToPlay, setMovesToPlay] = useState(-1)
+  const gameMoves = useRef(null)
+  if (gameMoves.current === null) gameMoves.current = new GameMoves(null);
+  const [movesToPlay, setMovesToPlay] = useState(gameMoves.current.value())
+
 
   // TODO: implement analysis mode with showing best N moves, turned into link with FEN game and how to continue
   // TODO: make short cut game mode settings (color, depth, fav figure, move to select)
@@ -117,6 +149,8 @@ const App = () => {
     blackTimerRef.current.reset(blackTimeMS)
 
     moveHistoryRef.current = new MoveHistory(startFen)
+    gameMoves.current.reset()
+    setMovesToPlay(gameMoves.current.value())
 
     initializeGame() // set values from new state
   };
@@ -125,11 +159,14 @@ const App = () => {
     if (computerMoves === "random") {
       setComputerMoves(Math.random() < 0.5 ? "white" : "black")
     }
+    console.debug("Setting moves to play based on parameter: ", maxMoves)
     if (maxMoves !== "" && maxMoves !== 0) {
-      setMovesToPlay(Math.floor(maxMoves))
+      gameMoves.current = new GameMoves(Math.floor(maxMoves))
     } else {
-      setMovesToPlay(-1)
+      gameMoves.current = new GameMoves(null)
     }
+    setMovesToPlay(gameMoves.current.value())
+
     setgameState("playing");
     setStartingFen(startFen)
     reset_game(startFen);
@@ -274,7 +311,7 @@ const App = () => {
       }
     }
 
-    if (movesToPlay === 0 && gameState === "playing") {
+    if (gameMoves.current.expired() && gameState === "playing") {
       setgameState("allmoved")
     }
   }
@@ -313,7 +350,8 @@ const App = () => {
       }
 
       if(game.turn() === "w") {
-        if (movesToPlay > 0) setMovesToPlay(movesToPlay - 1)
+        gameMoves.current.decrement()
+        setMovesToPlay(gameMoves.current.value())
       }
 
       // only switch timers in case of a valid move
@@ -513,7 +551,7 @@ const App = () => {
           </p>
         </div>
         {
-          movesToPlay > -1 && <p>Remaining Moves: {movesToPlay}</p>
+          movesToPlay !== null && <p>Remaining Moves: {movesToPlay}</p>
         }
       </section>
       {/* Display the best move and evaluation score */}
