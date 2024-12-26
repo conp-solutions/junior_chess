@@ -65,7 +65,26 @@ class GameMoves {
   }
 }
 
+function getBotFromSymbol(symbol, defaultIndex = null) {
+  for (const bot of AVAILABLE_BOTS) {
+    if (bot.botSymbol === symbol) {
+      return bot
+    }
+  }
+  if (defaultIndex !== null) {
+    return AVAILABLE_BOTS[defaultIndex]
+  }
+  return null
+}
+
 const App = () => {
+
+  const queryParameters = new URLSearchParams(window.location.search)
+  const urlFen = queryParameters.get("fen")
+  const urlBotSymbol = queryParameters.get("botSymbol")
+  const urlBotColor = queryParameters.get("botColor") === "white" ? "white" : "black"
+  console.debug("URL fen: ", urlFen)
+
   // State variables for chess game logic, Stockfish worker, best move, and evaluation
   const [gameState, setgameState] = useState("loading");  // loading, playing, gameOver -- to indicate state
   const [game, setGame] = useState(new Chess()); // Chess game instance
@@ -80,7 +99,7 @@ const App = () => {
   const [fromSquare, setFromSquare] = useState(null); // Holds the starting square of the last move
   const [toSquare, setToSquare] = useState(null); // Holds the destination square of the last move
 
-  const [computerMoves, setComputerMoves] = useState("black"); // Which color should the computer move (white, black, none)
+  const [computerMoves, setComputerMoves] = useState(urlBotColor); // Which color should the computer move (white, black, none)
 
   // set defaults
   const [stockfishModel, setStockfishModel] = useState(stockfishVersions[0])
@@ -107,7 +126,7 @@ const App = () => {
 
   const chessPositoinMoves = useRef(null);
   if (chessPositoinMoves.current === null) chessPositoinMoves.current = new ChessPositionMoves();
-  const [botStrategy, setBotStrategy] = useState(AVAILABLE_BOTS[0]);
+  const [botStrategy, setBotStrategy] = useState(getBotFromSymbol(urlBotSymbol, 0));
 
   const gameMoves = useRef(null)
   if (gameMoves.current === null) gameMoves.current = new GameMoves(null);
@@ -390,12 +409,7 @@ const App = () => {
   };
 
   const setSelectedBotFromValue = (symbolValue) => {
-    let selectedBot = null;
-    for (const [i, bot] of AVAILABLE_BOTS.entries()) {
-      if (bot.botSymbol === symbolValue) {
-        selectedBot = bot
-      }
-    }
+    let selectedBot = getBotFromSymbol(symbolValue)
     if (selectedBot === null) {
       console.error("Could not find bot with symbol " + symbolValue)
       return
@@ -464,7 +478,7 @@ const App = () => {
         </p>
         <h4>Full FEN</h4>
         <p>
-          <input type="text" id="fen" name="fen" placeholder="FEN string" />
+          <input type="text" id="fen" name="fen" placeholder="FEN string" value={urlFen} />
         </p>
       </details>
       <details><summary><strong>Time Settings</strong></summary>
