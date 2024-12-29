@@ -71,7 +71,8 @@ export class BotStrategy {
     let moves = positionMoves.moves;
     console.debug("Selecting move via strategy ", this.botSymbol, " from ", moves.length, " moves with best move ", bestMove, " and FEN ", positionMoves.fen);
 
-    let game = new Chess(positionMoves.fen);
+    let fen = positionMoves.fen
+    let game = new Chess(fen);
 
     /* simple time calculation, as a start, take around 5 s per move */
     let takenTimeMS = 5432;
@@ -87,7 +88,7 @@ export class BotStrategy {
     // select a move based on the given position moves
     if (this.useBestMove) {
       // If useBestMove is true, return the best move
-      let returnmove = new StructuredMove(bestMove.slice(0, 2), bestMove.slice(2, 4), QUEEN, takenTimeMS)
+      let returnmove = new StructuredMove(bestMove.slice(0, 2), bestMove.slice(2, 4), QUEEN, fen, takenTimeMS)
       console.debug("Return requested best move: ", returnmove)
       return returnmove
     }
@@ -110,7 +111,7 @@ export class BotStrategy {
 
     /* console.debug("For move selection, best score: ", bestScore); */
     if (bestScore === null) {
-      let returnmove = new StructuredMove(bestMove.slice(0, 2), bestMove.slice(2, 4), QUEEN, takenTimeMS)
+      let returnmove = new StructuredMove(bestMove.slice(0, 2), bestMove.slice(2, 4), QUEEN, fen, takenTimeMS)
       console.debug("Return best move due to no found bestScore: ", returnmove)
       return returnmove
     }
@@ -152,7 +153,7 @@ export class BotStrategy {
     }
 
     if (pickedMove !== null) {
-      let returnmove = new StructuredMove(pickedMove.move.slice(0, 2), pickedMove.move.slice(2, 4), QUEEN, takenTimeMS)
+      let returnmove = new StructuredMove(pickedMove.move.slice(0, 2), pickedMove.move.slice(2, 4), QUEEN, fen, takenTimeMS)
       console.debug("Return requested opening move: ", returnmove, " for playing in game state with turn ", game.turn())
       return returnmove
     }
@@ -193,11 +194,11 @@ export class BotStrategy {
 
     if (randomMove !== undefined && randomMove !== "") {
       console.debug("Selecting random move from ", acceptableMoves.length, " moves with score ", randomeScore, " vs best score: ", bestScore, ", namely: ", randomMove);
-      let returnmove = new StructuredMove(randomMove.slice(0, 2), randomMove.slice(2, 4), "q", takenTimeMS)
+      let returnmove = new StructuredMove(randomMove.slice(0, 2), randomMove.slice(2, 4), "q", fen, takenTimeMS)
       console.debug("Return random selected move: ", returnmove)
       return returnmove
     } else {
-      let returnmove = new StructuredMove(bestMove.slice(0, 2), bestMove.slice(2, 4), "q", takenTimeMS)
+      let returnmove = new StructuredMove(bestMove.slice(0, 2), bestMove.slice(2, 4), "q", fen, takenTimeMS)
       console.debug("Return fallback best move: ", returnmove)
       return returnmove
     }
@@ -214,6 +215,7 @@ export const parseStockfishMessage = (message, turn) => {
     info depth 16 seldepth 17 multipv 3 score cp 1236 nodes 51778 nps 325647 hashfull 23 time 159 pv f3g4 g1f2 e6f4 d1d6 f6g5 e2e5 f4h3 f2e1 g4g1 e1d2 g1h2 e5e2 h2d6 d2c1 d6f4 c1b2
   */
 
+  // TODO: fix from https://github.com/bjedrzejewski/stockfish-js/blob/master/example/enginegame.js#L136
   let result = { bestMove: "", evaluation: "", pawnsScore: 0, move: "" }; // Initialize result with default values
 
   /*console.info("Received from stockfish: ", message) */

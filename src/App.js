@@ -3,13 +3,15 @@ import { Chessboard } from "react-chessboard"; // Import the Chessboard componen
 import { Chess } from "chess.js"; // Import the Chess library for game logic
 
 import { Timer } from "./Timer.js"
-import { MoveHistory, ChessMove, StructuredMove } from "./MoveHistory.js";
+import { MoveHistory, ChessMove, StructuredMove, MovesAnalysis } from "./MoveHistory.js";
 import { AVAILABLE_BOTS, parseStockfishMessage, ChessPositionMoves, BotStrategy, ChessPositionMove } from "./ChessBot.js"
 
 import './App.css';
 
 const APPNAME = "Junior Chess"
 const INTERVAL_MS = 123
+
+// FIXME: out of bounds after starting from here: localhost:3000/junior_chess?botSymbol=🐉&fen=2k5/8/8/8/8/8/3Q4/4K3 w - - 0 22
 
 // Use latest state combined with intervals
 // from: https://overreacted.io/making-setinterval-declarative-with-react-hooks/
@@ -77,19 +79,32 @@ function getBotFromSymbol(symbol, defaultIndex = null) {
   return null
 }
 
+function negateStockfishScore(value) {
+  if(typeof value == "string") {
+    if (value.startsWith("-")) {
+      return value.substring(1)
+    }
+    if(value.startsWith("Mate in")) {
+      return "To be mated in " + value.substring(8)
+    }
+  } else {
+    return -value
+  }
+}
+
 const App = () => {
 
   const queryParameters = new URLSearchParams(window.location.search)
   const urlFen = queryParameters.get("fen")
   const urlBotSymbol = queryParameters.get("botSymbol")
   const urlBotColor = queryParameters.get("botColor") === "white" ? "white" : "black"
-  console.debug("URL fen: ", urlFen)
 
   // State variables for chess game logic, Stockfish worker, best move, and evaluation
   const [gameState, setgameState] = useState("loading");  // loading, playing, gameOver -- to indicate state
   const [game, setGame] = useState(new Chess()); // Chess game instance
   const [startingFen, setStartingFen] = useState(""); // FEN with which we started the game
   const [stockfish, setStockfish] = useState(null); // Stockfish Web Worker instance
+  const [analysisStockfish, setAnalysisStockfish] = useState(null); // Stockfish Web Worker instance for analysis
   const [bestMove, setBestMove] = useState(""); // Best move suggested by Stockfish
   const [evaluation, setEvaluation] = useState(""); // Evaluation of the position by Stockfish
   const [bestMoveArrow, setBestMoveArrow] = useState([]); // Stores arrow based on best move
@@ -103,7 +118,6 @@ const App = () => {
 
   // set defaults
   const [stockfishModel, setStockfishModel] = useState(stockfishVersions[0])
-  const [stockfishDepth, setStockfishDepth] = useState(16)
   const [showBestMove, setShowBestMove] = useState(false)
   const [showEvaluation, setShowEvaluation] = useState(false)
 
@@ -132,6 +146,9 @@ const App = () => {
   if (gameMoves.current === null) gameMoves.current = new GameMoves(null);
   const [movesToPlay, setMovesToPlay] = useState(gameMoves.current.value())
 
+  const analysisRef = useRef(null);
+  const [analysisMoveIndex, setAnalysisMoveIndex] = useState(0)
+  const [analysisCurrentMove, setAnalysisCurrentMove] = useState([])
 
   // TODO: implement analysis mode with showing best N moves, turned into link with FEN game and how to continue
   // TODO: make short cut game mode settings (color, depth, fav figure, move to select)
@@ -145,12 +162,15 @@ const App = () => {
   useEffect(() => {
     // stockfish-16.1-lite-single.js
     const stockfishWorker = new Worker(`${process.env.PUBLIC_URL}/js/${stockfishModel}`);
-
     setStockfish(stockfishWorker);
+
+    const analysisStockfishWorker = new Worker(`${process.env.PUBLIC_URL}/js/${stockfishModel}`);
+    setAnalysisStockfish(analysisStockfishWorker)
 
     // Terminate the worker when the component unmounts
     return () => {
       stockfishWorker.terminate();
+      analysisStockfishWorker.terminate();
       clearInterval(interval); // This represents the unmount function, in which you need to clear your interval to prevent memory leaks.
     };
   }, []);
@@ -168,6 +188,8 @@ const App = () => {
     blackTimerRef.current.reset(blackTimeMS)
 
     moveHistoryRef.current = new MoveHistory(startFen)
+    setAnalysisMoveIndex(0)
+    analysisRef.current = null
     gameMoves.current.reset()
     setMovesToPlay(gameMoves.current.value())
 
@@ -241,6 +263,14 @@ const App = () => {
     } else {
       whiteTimerRef.current.stop()
       blackTimerRef.current.stop()
+    }
+
+    if (gameState === "prepare_analyzing" && analysisRef.current !== null) {
+      if (analysisRef.current.ready()) {
+        console.debug("Done analysis, starting analysis state.")
+        setgameState("analyzing")
+        setAnalysisMoveArrow()
+      }
     }
 
 
@@ -359,7 +389,8 @@ const App = () => {
       const structuredMove = new StructuredMove(
         sourceSquare,
         targetSquare,
-        computer ? "q" : "q", // Always promote to a queen for simplicity
+        computer ? "q" : "q", // FIXME: consume promotion properly. For now, always promote to a queen for simplicity
+        game.fen()
       )
       const move = gameCopy.move(structuredMove.chessMove());
 
@@ -425,6 +456,7 @@ const App = () => {
   }
 
   const getSquareStyles = () => {
+    /* draw colors for best analysis move */
     const styles = {}; // Initialize an empty object for square styles
     if (fromSquare) {
       styles[fromSquare] = { backgroundColor: "rgba(173, 216, 230, 0.8)" }; // Light blue for the from-square
@@ -433,10 +465,54 @@ const App = () => {
       styles[toSquare] = { backgroundColor: "rgba(144, 238, 144, 0.8)" }; // Light green for the to-square
     }
     return styles; // Return the styles object
+  }
+
+  const getAnalysisSquareStyles = () => {
+    const styles = {}; // Initialize an empty object for square styles
+
+    if (analysisRef.current === null ) {
+      return
+    }
+
+    let bestMove = analysisRef.current.analyzedMoves[analysisMoveIndex].bestMove
+
+    if (bestMove.sourceSquare) {
+      styles[bestMove.sourceSquare] = { backgroundColor: "rgba(173, 216, 230, 0.8)" }; // Light blue for the from-square
+    }
+    if (bestMove.targetSquare) {
+      styles[bestMove.targetSquare] = { backgroundColor: "rgba(144, 238, 144, 0.8)" }; // Light green for the to-square
+    }
+    return styles; // Return the styles object
   };
 
+  const setAnalysisMoveArrow = (index = null) => {
+    let moveIndex = index !== null ? index : analysisMoveIndex
+    let move = analysisRef.current.moveHistory.getMoves()[moveIndex].move
+    console.debug("Setting analysis move arrow to " + move.sourceSquare + " -> " + move.targetSquare)
+    setAnalysisCurrentMove([[move.sourceSquare,move.targetSquare]])
+  }
+
+  /* start game analysis */
+  const analyzeGame = () => {
+    analysisRef.current = new MovesAnalysis(moveHistoryRef.current, analysisStockfish)
+    analysisRef.current.analyze()
+
+    if (analysisRef.current.ready()) {
+      setgameState("analyzing")
+    }
+  };
+
+  const changeAnalysisIndex = (change) => {
+    let newIndex = analysisMoveIndex + change
+    let knownMoves = analysisRef.current.moveHistory.moves.length
+    newIndex = newIndex >= knownMoves ? knownMoves -1 : newIndex;
+    newIndex = newIndex < 0 ? 0 : newIndex
+    setAnalysisMoveIndex(newIndex)
+    setAnalysisMoveArrow(newIndex)
+  }
+
   if (gameState === "loading") return (
-    <div style={{ "padding": "5 vmin", "textAlign": "left", "background-color": "#dddddd", "margin": "0 auto", }}>
+    <div style={{ "padding": "5 vmin", "textAlign": "left", "backgroundColor": "#dddddd", "margin": "0 auto", }}>
       <h1>{APPNAME} Game</h1>
       <h2>Setup</h2>
       <b>Computer</b>{botStrategy.botSymbol} moves <b>{computerMoves} pieces.</b>
@@ -540,12 +616,52 @@ const App = () => {
       </details>
 
     </div>)
+  else if (gameState === "prepare_analyzing") {
+    return (
+    <div style={{ "padding": "5 vmin", "textAlign": "left", "backgroundColor": "#eeeeee", "margin": "0 auto", }}>
+    <h1>Junior Chess -- Preparing Analysis</h1>
+    <p>Preparing analysis for {moveHistoryRef.current.moves.length} moves</p>
+    <p>Analysis will be ready soon ... 🦁🦄🐉🐴🪰</p>
+    <button style={{ "padding": "2px", "margin": "2px" }} onClick={() => {reset_game(); setgameState("loading")}}>New Game</button>
+    </div>
+    )
+  }
+  else if (gameState === "analyzing") {
+    return (
+    <div style={{ "padding": "5 vmin", "textAlign": "left", "backgroundColor": "#eeeeee", "margin": "0 auto", }}>
+    <h1>Junior Chess -- Analysis</h1>
+    <p>Analysis for {analysisRef.current.moveHistory.moves.length} moves</p>
+    <Chessboard
+            position={analysisRef.current.moveHistory.getMoves()[analysisMoveIndex].move.preFen} // Current position from the game state
+            boardWidth={Math.min(500, document.documentElement.clientWidth * 0.8)} // Width of the chessboard in pixels
+            customSquareStyles={getAnalysisSquareStyles()} // highlight best move
+            customArrows={analysisCurrentMove} // draw arrow for current move
+          />
+    <p>
+    <button onClick={() => {changeAnalysisIndex(-1)}}>Prev Move</button>
+    <button onClick={() => {changeAnalysisIndex(1)}}>Next Move</button>
+    </p>
+    <p>
+    Move: {analysisMoveIndex}
+    Score: {analysisRef.current.moveHistory.getMoves()[analysisMoveIndex].move.prePositionScore}
+    </p>
+    <p>
+    Best Move: {analysisRef.current.analyzedMoves[analysisMoveIndex].bestMove.str()}
+    Best Score: {analysisRef.current.analyzedMoves[analysisMoveIndex].bestMoveScore}
+    </p>
+    <button style={{ "padding": "2px", "margin": "2px" }} onClick={() => {reset_game(); setgameState("loading")}}>New Game</button>
+    </div>
+    )
+  }
   else return (
-    <div style={{ "padding": "5 vmin", "textAlign": "left", "background-color": "#eeeeee", "margin": "0 auto", }}>
+    <div style={{ "padding": "5 vmin", "textAlign": "left", "backgroundColor": "#eeeeee", "margin": "0 auto", }}>
       <h1>{APPNAME} Game</h1>
       <section>
         <div id="board_tag">
           <p>Black Time: {blackTimerString}
+          {
+            showEvaluation && <b> with score: {negateStockfishScore(evaluation)} </b>
+          }
           {computerMoves === "black" && <b>Moving by bot {botStrategy.botSymbol} {botStrategy.botName}</b>}
           </p>
           {/* Chessboard component with custom pieces, square styles, and custom arrow */}
@@ -561,6 +677,9 @@ const App = () => {
             customArrowColor={showBestMove ? arrowColor : undefined} // Set the custom arrow color
           />
           <p>White Time: {whiteTimerString}
+          {
+            showEvaluation && <b> with score: {evaluation} </b>
+          }
           { computerMoves === "white" && <b>Moving by bot {botStrategy.botSymbol} {botStrategy.botName}</b>}
           </p>
         </div>
@@ -586,12 +705,13 @@ const App = () => {
           showBestMove && <p>Best Move: {bestMove}</p>
         }
         {
-          showEvaluation && <p>Position Score: {evaluation}</p>
+          showEvaluation && <p>Position Score for White: {evaluation}</p>
         }
         <h3>Game Settings</h3>
         <button style={{ "padding": "2px", "margin": "2px" }} onClick={() => reset_game(startingFen)}>Reset Game</button>
         <button style={{ "padding": "2px", "margin": "2px" }} onClick={() => toggleComputerMoves()}>Computer moves: {computerMoves}</button>
         <button style={{ "padding": "2px", "margin": "2px" }} onClick={() => {reset_game(); setgameState("loading")}}>New Game</button>
+        <button style={{ "padding": "2px", "margin": "2px" }} onClick={() => {setgameState("prepare_analyzing"); analyzeGame(); }}>Abort+Analyze</button>
         <details><summary>State and History</summary>
 
           <p><b>Move Number: {game.moveNumber()}</b></p>
