@@ -650,6 +650,27 @@ const App = () => {
     Best Move: {analysisRef.current.analyzedMoves[analysisMoveIndex].bestMove.str()}
     Best Score: {analysisRef.current.analyzedMoves[analysisMoveIndex].bestMoveScore}
     </p>
+    <h2>Full history</h2>
+    <table>
+    <thead>
+      <tr>
+        <th>Move</th>
+        <th>Score</th>
+        <th>Best Move</th>
+        <th>Best Score</th>
+      </tr>
+    </thead>
+    <tbody>
+      {analysisRef.current.analyzedMoves.map((analyzedMove, index) => (
+        <tr key={index}>
+          <td>{analyzedMove.structuredMove.move.str()}</td>
+          <td>{analyzedMove.score}</td>
+          <td>{analyzedMove.bestMove.str()}</td>
+          <td>{analyzedMove.bestMoveScore}</td>
+        </tr>
+      ))}
+    </tbody>
+    </table>
     <button style={{ "padding": "2px", "margin": "2px" }} onClick={() => {reset_game(); setgameState("loading")}}>New Game</button>
     </div>
     )

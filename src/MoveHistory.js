@@ -60,6 +60,7 @@ export class AnalyzedMoves {
     this.structuredMove = structuredMove;
     this.bestMove = bestStructuredMove;
     this.bestMoveScore = bestScore;
+    this.score = null;
   }
 }
 
@@ -145,9 +146,15 @@ export class MovesAnalysis {
       this.currentScore = null;
 
       if (this.currentIndex >= this.moveHistory.getMoves().length) {
-        this.state = "ready";
+
+        /* for each move in this.analyzedMoves make score the best score of the next move */
+        for (let i = 0; i < this.analyzedMoves.length - 1; i++) {
+          this.analyzedMoves[i].score = this.analyzedMoves[i + 1].bestMoveScore;
+        }
+
         console.debug("analysis of ", this.moveHistory.getMoves().length, " moves finished");
         console.debug(this.analyzedMoves)
+        this.state = "ready";
       } else {
         this.startAnalyzingCurrenMove();
       }
