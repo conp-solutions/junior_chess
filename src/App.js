@@ -452,6 +452,7 @@ const App = () => {
   // Function to handle piece drop events on the chessboard
   const onDrop = (sourceSquare, targetSquare) => {
     console.debug("Reeived onDrop with " + sourceSquare + " to " + targetSquare)
+    if (bestMove === "") return false;
     return movePiece(sourceSquare, targetSquare, false)
   }
 
