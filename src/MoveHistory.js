@@ -56,11 +56,12 @@ export class MoveHistory {
 }
 
 export class AnalyzedMoves {
-  constructor(structuredMove, bestStructuredMove, bestScore) {
+  constructor(structuredMove, bestStructuredMove, bestScore, bestMoveParts) {
     this.structuredMove = structuredMove;
     this.bestMove = bestStructuredMove;
     this.bestMoveScore = bestScore;
     this.score = null;
+    this.bestMoveParts = bestMoveParts;
   }
 }
 
@@ -74,6 +75,7 @@ export class MovesAnalysis {
     this.analyzedMoves = []; /* of type AnalyzedMoves */
     this.currentIndex = 0;
     this.currentScore = null;
+    this.moveMoveParts = null;
   }
 
   ready() {
@@ -114,12 +116,13 @@ export class MovesAnalysis {
     if(match) {
       finishedCurrentEvaluation = true;
         // from, to, promotion
-        console.debug("Found analysis best move for index ", this.currentIndex, " : ", match[1], match[2], match[3]);
+        // console.debug("Found analysis best move for index ", this.currentIndex, " : ", match[1], match[2], match[3]);
         bestMove = new StructuredMove(match[1], match[2], match[3]);
     }
     const game = this.moveHistory.getMoves()[this.currentIndex].game;
     match = line.match(/^info .*\bscore (\w+) (-?\d+)/)
     if(match) {
+        console.debug("Found score match from line ", line)
         var score = parseInt(match[2]) * (game.turn() === 'w' ? 1 : -1);
         if(match[1] === 'cp') {
             this.currentScore = (score / 100.0).toFixed(2);
@@ -130,6 +133,13 @@ export class MovesAnalysis {
         if(match) {
           this.currentScore = ((match[1] === 'upper') === (game.turn() === 'w') ? '<= ' : '>= ') + score
         }
+        /* full example line: info depth 10 seldepth 10 multipv 1 score cp -64 nodes 6927 nps 494785 hashfull 2 time 14 pv h4f6 g1e2 d7d6 f1g2 c7c5 d4c5 d6c5 d1d8 f6d8 
+           get array of moves, and store in this.currentBestMoves */
+        line.indexOf('pv')
+        const scoreParts = line.split(" "); // Split message into words
+        const scoreIndex = scoreParts.indexOf("pv") + 1
+        this.moveMoveParts = scoreParts.slice(scoreIndex);
+        console.debug("Found move parts: ", this.moveMoveParts)
     }
 
     if (finishedCurrentEvaluation) {
@@ -137,13 +147,15 @@ export class MovesAnalysis {
         new AnalyzedMoves(
           this.moveHistory.getMoves()[this.currentIndex],
           bestMove,
-          this.currentScore
+          this.currentScore,
+          this.moveMoveParts
         )
       );
       
       console.debug("analysis of move ", this.currentIndex + 1, " finished with score ", this.currentScore, ". AnalyzedMoves now has ", this.analyzedMoves.length, " moves");
       this.currentIndex++;
       this.currentScore = null;
+      this.moveMoveParts = null;
 
       if (this.currentIndex >= this.moveHistory.getMoves().length) {
 

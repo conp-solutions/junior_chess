@@ -639,8 +639,10 @@ const App = () => {
             customArrows={analysisCurrentMove} // draw arrow for current move
           />
     <p>
+    <button onClick={() => {changeAnalysisIndex(-10)}}>-10</button>
     <button onClick={() => {changeAnalysisIndex(-1)}}>Prev Move</button>
     <button onClick={() => {changeAnalysisIndex(1)}}>Next Move</button>
+    <button onClick={() => {changeAnalysisIndex(10)}}>+10</button>
     </p>
     <p>
     Move: {analysisMoveIndex}
@@ -654,19 +656,23 @@ const App = () => {
     <table>
     <thead>
       <tr>
+        <th></th>
         <th>Move</th>
         <th>Score</th>
         <th>Best Move</th>
         <th>Best Score</th>
+        <th>Best Move Order</th>
       </tr>
     </thead>
     <tbody>
       {analysisRef.current.analyzedMoves.map((analyzedMove, index) => (
         <tr key={index}>
+          <td>{index}</td>
           <td>{analyzedMove.structuredMove.move.str()}</td>
           <td>{analyzedMove.score}</td>
           <td>{analyzedMove.bestMove.str()}</td>
           <td>{analyzedMove.bestMoveScore}</td>
+          <td>{analyzedMove.bestMoveParts.join(' ')}</td>
         </tr>
       ))}
     </tbody>
