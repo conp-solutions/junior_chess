@@ -505,6 +505,10 @@ const App = () => {
 
   const changeAnalysisIndex = (change) => {
     let newIndex = analysisMoveIndex + change
+    setAnalysisIndexValue(newIndex)
+  }
+
+  const setAnalysisIndexValue = (newIndex) => {
     let knownMoves = analysisRef.current.moveHistory.moves.length
     newIndex = newIndex >= knownMoves ? knownMoves -1 : newIndex;
     newIndex = newIndex < 0 ? 0 : newIndex
@@ -658,6 +662,7 @@ const App = () => {
       <tr>
         <th></th>
         <th>Move</th>
+        <th>Turn</th>
         <th>Score</th>
         <th>Best Move</th>
         <th>Best Score</th>
@@ -666,8 +671,15 @@ const App = () => {
     </thead>
     <tbody>
       {analysisRef.current.analyzedMoves.map((analyzedMove, index) => (
-        <tr key={index}>
+          <tr key={index}
+            onClick={() => {setAnalysisIndexValue(index)}}
+            style={{
+              backgroundColor: index === analysisMoveIndex ? '#ffeb3b' : 'transparent',
+              cursor: 'pointer'
+            }}
+          >
           <td>{index}</td>
+          <td>{analyzedMove.structuredMove.move.preFen.split(" ")[1]}</td>
           <td>{analyzedMove.structuredMove.move.str()}</td>
           <td>{analyzedMove.score}</td>
           <td>{analyzedMove.bestMove.str()}</td>
