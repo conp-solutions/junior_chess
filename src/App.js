@@ -98,6 +98,7 @@ const App = () => {
   const urlFen = queryParameters.get("fen")
   const urlBotSymbol = queryParameters.get("botSymbol")
   const urlBotColor = queryParameters.get("botColor") === "white" ? "white" : "black"
+  const urlPreMoves = queryParameters.get("preMoves")
 
   // State variables for chess game logic, Stockfish worker, best move, and evaluation
   const [gameState, setgameState] = useState("loading");  // loading, playing, gameOver -- to indicate state
@@ -150,6 +151,9 @@ const App = () => {
   const [analysisMoveIndex, setAnalysisMoveIndex] = useState(0)
   const [analysisCurrentMove, setAnalysisCurrentMove] = useState([])
 
+  const gamePreMoves = useRef(null);
+  if (gamePreMoves.current === null) gamePreMoves.current = [];
+
   // TODO: implement analysis mode with showing best N moves, turned into link with FEN game and how to continue
   // TODO: make short cut game mode settings (color, depth, fav figure, move to select)
 
@@ -196,7 +200,7 @@ const App = () => {
     initializeGame() // set values from new state
   };
 
-  const startGame = (startFen = "", maxMoves = 0) => {
+  const startGame = (startFen = "", maxMoves = 0, preMoves = "") => {
     if (computerMoves === "random") {
       setComputerMoves(Math.random() < 0.5 ? "white" : "black")
     }
@@ -210,8 +214,47 @@ const App = () => {
 
     setgameState("playing");
     setStartingFen(startFen)
+    if (preMoves !== "") {
+      // remove newlines from preMoves string, then split by spaces and turn into moves array
+      preMoves = preMoves.replace(/\n/g, " ");
+      let moves = preMoves.split(" ")
+      console.debug("Received pre moves: ", moves)
+      checkAndSetPreMoves(startFen, moves)
+    }
     reset_game(startFen);
   };
+
+  const checkAndSetPreMoves = (startFen, moves) => {
+    console.debug("Checking ", moves.length, " with FEN: ", startFen)
+    let checkGame = startFen !== "" ? new Chess(startFen) : new Chess()
+    let preMoves = []
+    console.debug("Assessing ", moves.length, " preMoves")
+    for (let i = 0; i < moves.length; i++) {
+      let nextMove = moves[i]
+      let sourceSquare = nextMove.slice(0, 2)
+      let targetSquare = nextMove.slice(2, 4)
+      let promotionPiece = nextMove.slice(4, 5)
+
+      const structuredMove = new StructuredMove(
+        sourceSquare,
+        targetSquare,
+        promotionPiece,
+        checkGame.fen()
+      )
+
+      console.debug("Validating ", structuredMove.str(), " ...")
+      const move = checkGame.move(structuredMove.chessMove());
+
+      // If the move is invalid, return false to prevent it
+      if (move === null) {
+        console.debug("Invalid move ", structuredMove.str(), ", stopping premoves.")
+        break
+      }
+      preMoves.push(nextMove)
+    }
+    console.debug("Setting ", preMoves.length, " pre moves")
+    gamePreMoves.current = preMoves
+  }
 
   const initializeGame = () => {
     console.debug("Initializing game ...");
@@ -292,8 +335,20 @@ const App = () => {
     historyHtmlString += '</ol>'
     setHistoryString(historyHtmlString)
 
-    // update the game logic, i.e. make a bot move, write message, ...
-    if ((computerMoves === "white" && game.turn() === "w") || (computerMoves === "black" && game.turn() === "b")) {
+    if (gamePreMoves.current.length > 0) {
+      // wait until the engine has a best move
+      if (!bestMove) return
+      // FIXME tries to repeat the same move multiple times, as game state is not updated everywhere in time
+
+      console.debug("Select premove for game move number ", game.moveNumber(), " from: ", gamePreMoves.current)
+      let nextMove = gamePreMoves.current[0]
+      gamePreMoves.current.shift()
+      console.debug("Next move: ", nextMove)
+      // use premove, mark as computer move
+      let promoPiece = nextMove.length > 4 ? nextMove.slice(4,5) : null
+      movePiece(nextMove.slice(0, 2), nextMove.slice(2, 4), false, promoPiece, true)
+    } else if ((computerMoves === "white" && game.turn() === "w") || (computerMoves === "black" && game.turn() === "b")) {
+      // update the game logic, i.e. make a bot move, write message, ...
       console.debug("Computer moves ", computerMoves, " with turn color ", game.turn());
       if (bestMove) {
         movePiece(bestMove.slice(0, 2), bestMove.slice(2, 4), true);
@@ -349,13 +404,14 @@ const App = () => {
     return true;
   }
 
-  const updateStateBaseOnGame = (game) => {
-    setGame(game);
+  const updateStateBaseOnGame = (newGame) => {
+    console.debug("Update game with new FEN: ", newGame.fen())
+    setGame(newGame);
 
-    if (game.isDraw()) {
+    if (newGame.isDraw()) {
       setgameState("draw")
     } else {
-      if (game.isGameOver()) {
+      if (newGame.isGameOver()) {
         setgameState("gameOver");
       }
     }
@@ -365,21 +421,23 @@ const App = () => {
     }
   }
 
-  const movePiece = (sourceSquare, targetSquare, computer = false) => {
+  const movePiece = (sourceSquare, targetSquare, computer = false, promotion = null, preMove = false) => {
 
     // Do not move in case we are not playing
     if (gameState !== "playing") return false;
 
     // Attempt to move piece from source to target
     // Check whether we are allowed to move right now, human and computer
-    if (computer) {
-      if ((computerMoves !== "white" && game.turn() === "w") || (computerMoves !== "black" && game.turn() === "b")) {
-        return false
-      }
-    } else {
-      if ((computerMoves === "white" && game.turn() === "w") || (computerMoves === "black" && game.turn() === "b")) {
-        console.debug("Human moves, but it is not their turn")
-        return false
+    if (!preMove) {
+      if (computer) {
+        if ((computerMoves !== "white" && game.turn() === "w") || (computerMoves !== "black" && game.turn() === "b")) {
+          return false
+        }
+      } else {
+        if ((computerMoves === "white" && game.turn() === "w") || (computerMoves === "black" && game.turn() === "b")) {
+          console.debug("Human moves, but it is not their turn")
+          return false
+        }
       }
     }
 
@@ -389,7 +447,7 @@ const App = () => {
       const structuredMove = new StructuredMove(
         sourceSquare,
         targetSquare,
-        computer ? "q" : "q", // FIXME: consume promotion properly. For now, always promote to a queen for simplicity
+        promotion !== null ? promotion :(computer ? "q" : "q"), // FIXME: consume promotion properly. For now, always promote to a queen for simplicity
         game.fen()
       )
       const move = gameCopy.move(structuredMove.chessMove());
@@ -452,7 +510,13 @@ const App = () => {
   // Function to handle piece drop events on the chessboard
   const onDrop = (sourceSquare, targetSquare) => {
     console.debug("Reeived onDrop with " + sourceSquare + " to " + targetSquare)
+    // wait for engine to compute score and best move
     if (bestMove === "") return false;
+
+    // do not allow human moves as long as there are moves to be played from the input
+    if ( gamePreMoves.current.length > 0 )
+      return false;
+
     return movePiece(sourceSquare, targetSquare, false)
   }
 
@@ -523,7 +587,7 @@ const App = () => {
       <b>Computer</b>{botStrategy.botSymbol} moves <b>{computerMoves} pieces.</b>
       <b>White</b> time {whiteTimeMS / 60000} + {whiteIncrementMS / 1000} and black time {blackTimeMS / 60000} + {blackIncrementMS / 1000}.
       <h2>Modify Game</h2>
-      <button style={{ "padding": "2px", "margin": "2px" }} onClick={() => startGame(document.getElementById("fen").value, document.getElementById("move_numbers").value)}>▶ Start</button>
+      <button style={{ "padding": "2px", "margin": "2px" }} onClick={() => startGame(document.getElementById("fen").value, document.getElementById("move_numbers").value, document.getElementById("pre_moves").value)}>▶ Start</button>
       <button style={{ "padding": "2px", "margin": "2px" }} onClick={() => toggleComputerMoves()}>⟳ Change Computer</button>
       <div>
         <p>
@@ -600,6 +664,16 @@ const App = () => {
           />
           Show Evaluation
         </label>
+      </details>
+      <details><summary><strong>Pre-Moves</strong></summary>
+      <p>List of moves to be executed (fromSquareToSquare), space separated:</p>
+      <textarea type="text"
+       id="pre_moves"
+       name="pre_moves"
+       placeholder="e2e4 e7e5"
+       value={urlPreMoves}
+       rows="6"
+       style={{height: "6em"}}></textarea>
       </details>
       <details><summary><strong>Stockfish Settings</strong></summary>
         <div>
