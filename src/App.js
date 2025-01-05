@@ -723,6 +723,9 @@ const App = () => {
     <button onClick={() => {changeAnalysisIndex(10)}}>+10</button>
     </p>
     <p>
+    <button style={{ "padding": "2px", "margin": "2px" }} onClick={() => {reset_game(); setgameState("loading")}}>New Game</button>
+    </p>
+    <p>
     Move: {analysisMoveIndex}
     Score: {analysisRef.current.moveHistory.getMoves()[analysisMoveIndex].move.prePositionScore}
     </p>
