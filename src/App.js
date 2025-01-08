@@ -581,14 +581,14 @@ const App = () => {
   }
 
   if (gameState === "loading") return (
-    <div style={{ "padding": "5 vmin", "textAlign": "left", "backgroundColor": "#dddddd", "margin": "0 auto", }}>
+    <div style={{ "padding": "20px", "textAlign": "left", "backgroundColor": "#eeeeee", "margin": "10 auto", "min-width": 500, "max-width": "fit-content", "margin-left": "auto", "margin-right": "auto"}}>
       <h1>{APPNAME} Game</h1>
       <h2>Setup</h2>
       <b>Computer</b>{botStrategy.botSymbol} moves <b>{computerMoves} pieces.</b>
       <b>White</b> time {whiteTimeMS / 60000} + {whiteIncrementMS / 1000} and black time {blackTimeMS / 60000} + {blackIncrementMS / 1000}.
       <h2>Modify Game</h2>
-      <button style={{ "padding": "2px", "margin": "2px" }} onClick={() => startGame(document.getElementById("fen").value, document.getElementById("move_numbers").value, document.getElementById("pre_moves").value)}>▶ Start</button>
-      <button style={{ "padding": "2px", "margin": "2px" }} onClick={() => toggleComputerMoves()}>⟳ Change Computer</button>
+      <button onClick={() => startGame(document.getElementById("fen").value, document.getElementById("move_numbers").value, document.getElementById("pre_moves").value)}>▶ Start</button>
+      <button onClick={() => toggleComputerMoves()}>⟳ Change Computer</button>
       <div>
         <p>
           <label>
@@ -606,7 +606,7 @@ const App = () => {
           </label>
         </p>
         <p>
-          Maximal Moves: <input type="number" min="0" id="move_numbers" name="max_moves" placeholder="number of moves" /><button style={{ "padding": "2px", "margin": "2px" }} onClick={() => document.getElementById("move_numbers").value = ""}>Unlimited</button>
+          Maximal Moves: <input type="number" min="0" id="move_numbers" name="max_moves" placeholder="number of moves" /><button onClick={() => document.getElementById("move_numbers").value = ""}>Unlimited</button>
         </p>
       </div>
       <details><summary><strong>Start from Position</strong></summary>
@@ -616,9 +616,13 @@ const App = () => {
           <button onClick={() => document.getElementById("fen").value = "2k5/8/8/8/8/8/3Q4/4K3 w - - 0 22"}>Queen♕</button>
           <button onClick={() => document.getElementById("fen").value = "2k5/8/8/8/8/8/3R4/4K3 w - - 0 22"}>Rook♖</button>
           <button onClick={() => document.getElementById("fen").value = "2k5/8/8/8/8/8/3P4/4K3 w - - 0 22"}>Pawn♙</button>
+        </p>
+        <p>
           <button onClick={() => document.getElementById("fen").value = "2k5/8/8/8/8/8/3NB3/4K3 w - - 0 22"}>Bishop♗ + Knight♘</button>
           <button onClick={() => document.getElementById("fen").value = "2k5/8/8/8/8/8/3BB3/4K3 w - - 0 22"}>Bishop♗ + Bishop♗</button>
           <button onClick={() => document.getElementById("fen").value = "2k5/1r6/8/8/8/8/3Q4/4K3 w - - 0 22"}>Queen♕ vs Rook♖</button>
+        </p>
+        <p>
           <button onClick={() => document.getElementById("fen").value = "2k5/3r4/8/8/8/8/3PR3/4K3 w - - 0 22"}>Rook♖+Pawn♙ vs Rook♖</button>
         </p>
         <h4>Full FEN</h4>
@@ -697,17 +701,17 @@ const App = () => {
     </div>)
   else if (gameState === "prepare_analyzing") {
     return (
-    <div style={{ "padding": "5 vmin", "textAlign": "left", "backgroundColor": "#eeeeee", "margin": "0 auto", }}>
+      <div style={{ "padding": "20px", "textAlign": "left", "backgroundColor": "#eeeeee", "margin": "10 auto", "min-width": 500, "max-width": "fit-content", "margin-left": "auto", "margin-right": "auto"}}>
     <h1>Junior Chess -- Preparing Analysis</h1>
     <p>Preparing analysis for {moveHistoryRef.current.moves.length} moves</p>
     <p>Analysis will be ready soon ... 🦁🦄🐉🐴🪰</p>
-    <button style={{ "padding": "2px", "margin": "2px" }} onClick={() => {reset_game(); setgameState("loading")}}>New Game</button>
+    <button onClick={() => {reset_game(); setgameState("loading")}}>New Game</button>
     </div>
     )
   }
   else if (gameState === "analyzing") {
     return (
-    <div style={{ "padding": "5 vmin", "textAlign": "left", "backgroundColor": "#eeeeee", "margin": "0 auto", }}>
+      <div style={{ "padding": "20px", "textAlign": "left", "backgroundColor": "#eeeeee", "margin": "10 auto", "min-width": 500, "max-width": "fit-content", "margin-left": "auto", "margin-right": "auto"}}>
     <h1>Junior Chess -- Analysis</h1>
     <p>Analysis for {analysisRef.current.moveHistory.moves.length} moves</p>
     <Chessboard
@@ -723,15 +727,17 @@ const App = () => {
     <button onClick={() => {changeAnalysisIndex(10)}}>+10</button>
     </p>
     <p>
-    <button style={{ "padding": "2px", "margin": "2px" }} onClick={() => {reset_game(); setgameState("loading")}}>New Game</button>
+    <button onClick={() => {reset_game(); setgameState("loading")}}>New Game</button>
     </p>
     <p>
-    Move: {analysisMoveIndex}
-    Score: {analysisRef.current.moveHistory.getMoves()[analysisMoveIndex].move.prePositionScore}
+    Move: {analysisMoveIndex} 
+    Score: {analysisRef.current.analyzedMoves[analysisMoveIndex].score}
+    (arrow)
     </p>
     <p>
     Best Move: {analysisRef.current.analyzedMoves[analysisMoveIndex].bestMove.str()}
     Best Score: {analysisRef.current.analyzedMoves[analysisMoveIndex].bestMoveScore}
+    (colored)
     </p>
     <h2>Full history</h2>
     <table>
@@ -766,12 +772,12 @@ const App = () => {
       ))}
     </tbody>
     </table>
-    <button style={{ "padding": "2px", "margin": "2px" }} onClick={() => {reset_game(); setgameState("loading")}}>New Game</button>
+    <button onClick={() => {reset_game(); setgameState("loading")}}>New Game</button>
     </div>
     )
   }
   else return (
-    <div style={{ "padding": "5 vmin", "textAlign": "left", "backgroundColor": "#eeeeee", "margin": "0 auto", }}>
+    <div style={{ "padding": "20px", "textAlign": "left", "backgroundColor": "#eeeeee", "margin": "10 auto", "min-width": 500, "max-width": "fit-content", "margin-left": "auto", "margin-right": "auto"}}>
       <h1>{APPNAME} Game</h1>
       <section>
         <div id="board_tag">
@@ -825,28 +831,14 @@ const App = () => {
           showEvaluation && <p>Position Score for White: {evaluation}</p>
         }
         <h3>Game Settings</h3>
-        <button style={{ "padding": "2px", "margin": "2px" }} onClick={() => reset_game(startingFen)}>Reset Game</button>
-        <button style={{ "padding": "2px", "margin": "2px" }} onClick={() => toggleComputerMoves()}>Computer moves: {computerMoves}</button>
-        <button style={{ "padding": "2px", "margin": "2px" }} onClick={() => {reset_game(); setgameState("loading")}}>New Game</button>
-        <button style={{ "padding": "2px", "margin": "2px" }} onClick={() => {setgameState("prepare_analyzing"); analyzeGame(); }}>Abort+Analyze</button>
+        <button onClick={() => reset_game(startingFen)}>Reset Game</button>
+        <button onClick={() => toggleComputerMoves()}>Computer moves: {computerMoves}</button>
+        <button onClick={() => {reset_game(); setgameState("loading")}}>New Game</button>
+        <button onClick={() => {setgameState("prepare_analyzing"); analyzeGame(); }}>Abort+Analyze</button>
         <details><summary>State and History</summary>
 
-          <p><b>Move Number: {game.moveNumber()}</b></p>
-          <p>
-            FEN: {game.fen()}<button onClick={() => navigator.clipboard.writeText(game.fen())}>Copy FEN to clipboard</button>
-          </p>
-          {/* show moves from game array as enumerated list
-          game.history(true).map(
-            item => <p>{item}</p>
-          )
-           */
-          }
-          { /* use the game.history({ verbose = false } = {}) method to print all moves that have happened until now
-          game.history({ verbose: true }).map(
-            item => <p>{item.from} -> {item.to}</p>
-          )
-          */
-          }
+          <b>Move Number: {game.moveNumber()}</b>
+          <button onClick={() => navigator.clipboard.writeText(game.fen())}>Copy FEN to clipboard</button>
           <div className="history" dangerouslySetInnerHTML={{ __html: historyString }}></div>
         </details>
 

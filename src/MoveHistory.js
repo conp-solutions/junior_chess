@@ -177,6 +177,6 @@ export class MovesAnalysis {
     let fen = this.moveHistory.getMoves()[this.currentIndex].move.preFen;
     console.debug("Start analyzing move ", this.currentIndex + 1, " of ", this.moveHistory.getMoves().length, " with FEN: ", fen);
     this.stockfishWorker.postMessage("position fen " + fen);
-    this.stockfishWorker.postMessage("go depth 10"); // TODO: set to 20
+    this.stockfishWorker.postMessage("go depth 16"); // TODO: set to 20
   }
 }
