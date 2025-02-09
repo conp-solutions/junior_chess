@@ -21,7 +21,7 @@ export class StructuredMove {
   }
 
   str() {
-    return `${this.sourceSquare}${this.targetSquare}`
+    return `${this.sourceSquare}${this.targetSquare}${this.promotion}`
   }
 }
 

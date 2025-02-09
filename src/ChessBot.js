@@ -88,7 +88,8 @@ export class BotStrategy {
     // select a move based on the given position moves
     if (this.useBestMove) {
       // If useBestMove is true, return the best move
-      let returnmove = new StructuredMove(bestMove.slice(0, 2), bestMove.slice(2, 4), QUEEN, fen, takenTimeMS)
+      let promoPiece = bestMove.length === 5 ? bestMove.slice(4, 5) : QUEEN;
+      let returnmove = new StructuredMove(bestMove.slice(0, 2), bestMove.slice(2, 4), promoPiece, fen, takenTimeMS)
       console.debug("Return requested best move: ", returnmove)
       return returnmove
     }
@@ -111,7 +112,8 @@ export class BotStrategy {
 
     /* console.debug("For move selection, best score: ", bestScore); */
     if (bestScore === null) {
-      let returnmove = new StructuredMove(bestMove.slice(0, 2), bestMove.slice(2, 4), QUEEN, fen, takenTimeMS)
+      let promoPiece = bestMove.length === 5 ? bestMove.slice(4, 5) : QUEEN;
+      let returnmove = new StructuredMove(bestMove.slice(0, 2), bestMove.slice(2, 4), promoPiece, fen, takenTimeMS)
       console.debug("Return best move due to no found bestScore: ", returnmove)
       return returnmove
     }
@@ -153,7 +155,8 @@ export class BotStrategy {
     }
 
     if (pickedMove !== null) {
-      let returnmove = new StructuredMove(pickedMove.move.slice(0, 2), pickedMove.move.slice(2, 4), QUEEN, fen, takenTimeMS)
+      let promoPiece = pickedMove.length === 5 ? pickedMove.slice(4, 5) : QUEEN;
+      let returnmove = new StructuredMove(pickedMove.move.slice(0, 2), pickedMove.move.slice(2, 4), promoPiece, fen, takenTimeMS)
       console.debug("Return requested opening move: ", returnmove, " for playing in game state with turn ", game.turn())
       return returnmove
     }
@@ -194,11 +197,13 @@ export class BotStrategy {
 
     if (randomMove !== undefined && randomMove !== "") {
       console.debug("Selecting random move from ", acceptableMoves.length, " moves with score ", randomeScore, " vs best score: ", bestScore, ", namely: ", randomMove);
-      let returnmove = new StructuredMove(randomMove.slice(0, 2), randomMove.slice(2, 4), "q", fen, takenTimeMS)
+      let promoPiece = randomMove.length === 5 ? randomMove.slice(4, 5) : QUEEN;
+      let returnmove = new StructuredMove(randomMove.slice(0, 2), randomMove.slice(2, 4), promoPiece, fen, takenTimeMS)
       console.debug("Return random selected move: ", returnmove)
       return returnmove
     } else {
-      let returnmove = new StructuredMove(bestMove.slice(0, 2), bestMove.slice(2, 4), "q", fen, takenTimeMS)
+      let promoPiece = randomMove.length === 5 ? randomMove.slice(4, 5) : QUEEN;
+      let returnmove = new StructuredMove(bestMove.slice(0, 2), bestMove.slice(2, 4), promoPiece, fen, takenTimeMS)
       console.debug("Return fallback best move: ", returnmove)
       return returnmove
     }

@@ -110,6 +110,8 @@ const App = () => {
   const [evaluation, setEvaluation] = useState(""); // Evaluation of the position by Stockfish
   const [bestMoveArrow, setBestMoveArrow] = useState([]); // Stores arrow based on best move
   const arrowColor = "rgba(0, 0, 255, 0.6)"; // Custom arrow color
+  const promRef = useRef(null);
+  if (promRef.current === null) promRef.current = "q"
   const initializeCountRef = useRef(null);  // count to initialize game during update game loop
   if (initializeCountRef === null) initializeCountRef = 0;
 
@@ -358,9 +360,10 @@ const App = () => {
       movePiece(nextMove.slice(0, 2), nextMove.slice(2, 4), false, promoPiece, true)
     } else if ((computerMoves === "white" && game.turn() === "w") || (computerMoves === "black" && game.turn() === "b")) {
       // update the game logic, i.e. make a bot move, write message, ...
-      console.debug("Computer moves ", computerMoves, " with turn color ", game.turn());
+      console.debug("Computer moves ", computerMoves, " with turn color ", game.turn(), " and move ", bestMove);
       if (bestMove) {
-        movePiece(bestMove.slice(0, 2), bestMove.slice(2, 4), true);
+        let promoPiece = bestMove.length === 5 ? bestMove.slice(4, 5) : null
+        movePiece(bestMove.slice(0, 2), bestMove.slice(2, 4), true, promoPiece);
       } else {
         console.debug("No move available yet");
       }
@@ -375,7 +378,7 @@ const App = () => {
     if (!stockfish) return false;
 
     chessPositoinMoves.current = new ChessPositionMoves(game.fen())
-    console.debug("Posting stockfish messages with new game state and gameState: ", gameState)
+    console.debug("Posting stockfish messages with new game state and gameState: " + gameState + " and game.fen " + game.fen())
     stockfish.postMessage(`position fen ${game.fen()}`); // Set the position in Stockfish
     stockfish.postMessage(`setoption name multipv value 3`); // have stockfish send 3 potential moves
     stockfish.postMessage("go depth " + botStrategy.depth); // Ask Stockfish to analyze to depth 15
@@ -456,7 +459,7 @@ const App = () => {
       const structuredMove = new StructuredMove(
         sourceSquare,
         targetSquare,
-        promotion !== null ? promotion :(computer ? "q" : "q"), // FIXME: consume promotion properly. For now, always promote to a queen for simplicity
+        promotion !== null ? promotion :(computer ? "q" : promRef.current), // FIXME: consume promotion properly. For now, always promote to a queen for simplicity
         game.fen()
       )
       const move = gameCopy.move(structuredMove.chessMove());
@@ -516,9 +519,29 @@ const App = () => {
   }
 
 
+  // Promotion piece selection
+  const onPromote = (piece, promoteFromSquare, promoteToSquare) => {
+    // wait for engine to compute score and best move
+    if (bestMove === "") {
+      return false;
+    }
+
+    // from chessboard we get move color and piece, and need to translate
+    const promotionPiece = piece.charAt(1).toLowerCase();
+
+    // only accept expected pieces for promotion
+    if (!["q", "r", "b", "n"].includes(promotionPiece)) {
+      console.debug("No best move yet, not accepting promotion")
+      return false;
+    }
+    console.debug("Moving piece " + promoteFromSquare + " -> " + promoteToSquare + " with promotion " + promotionPiece)
+    promRef.current = promotionPiece
+    return true;
+  }
+
   // Function to handle piece drop events on the chessboard
   const onDrop = (sourceSquare, targetSquare) => {
-    console.debug("Reeived onDrop with " + sourceSquare + " to " + targetSquare)
+    console.debug("Received onDrop with " + sourceSquare + " to " + targetSquare)
     // wait for engine to compute score and best move
     if (bestMove === "") return false;
 
@@ -807,6 +830,7 @@ const App = () => {
           <Chessboard
             position={game.fen()} // Current position from the game state
             onPieceDrop={onDrop} // Function to handle piece drops // TODO: how to handle selected promotion piece?!
+            onPromotionPieceSelect={onPromote} // Function to handle piece promotion
             boardWidth={Math.min(500, document.documentElement.clientWidth * 0.8)} // Width of the chessboard in pixels
             // customPieces={customPieces} // Custom pieces mapping
             // customLightSquareStyle={lightSquareStyle} // Apply custom light square style
