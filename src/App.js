@@ -126,10 +126,10 @@ const App = () => {
   const [showBestMove, setShowBestMove] = useState(false)
   const [showEvaluation, setShowEvaluation] = useState(false)
 
-  const [whiteTimeMS, setWhiteTimeMS] = useState(15 * 60 * 1000)
-  const [whiteIncrementMS, setWhiteIncrementMS] = useState(10 * 1000)
-  const [blackTimeMS, setBlackTimeMS] = useState(15 * 60 * 1000)
-  const [blackIncrementMS, setBlackIncrementMS] = useState(10 * 1000)
+  const [whiteTimeMS, setWhiteTimeMS] = useState(10 * 60 * 1000)
+  const [whiteIncrementMS, setWhiteIncrementMS] = useState(1 * 1000)
+  const [blackTimeMS, setBlackTimeMS] = useState(10 * 60 * 1000)
+  const [blackIncrementMS, setBlackIncrementMS] = useState(1 * 1000)
 
   const whiteTimerRef = useRef(null);
   if (whiteTimerRef.current === null) whiteTimerRef.current = new Timer(whiteTimeMS);
