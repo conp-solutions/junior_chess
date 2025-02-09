@@ -743,6 +743,7 @@ const App = () => {
     <p>Preparing analysis for {moveHistoryRef.current.moves.length} moves</p>
     <p>Analysis will be ready soon ... 🦁🦄🐉🐴🪰</p>
     <button onClick={() => {reset_game(); setgameState("loading")}}>New Game</button>
+    <button onClick={() => {navigator.clipboard.writeText(game.pgn())}}>Copy PGN</button>
     </div>
     )
   }
@@ -881,6 +882,7 @@ const App = () => {
 
           <b>Move Number: {game.moveNumber()}</b>
           <button onClick={() => navigator.clipboard.writeText(game.fen())}>Copy FEN to clipboard</button>
+          <button onClick={() => {navigator.clipboard.writeText(game.pgn())}}>Copy PGN</button>
           <div className="history" dangerouslySetInnerHTML={{ __html: historyString }}></div>
         </details>
 
