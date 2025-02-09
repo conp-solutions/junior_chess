@@ -296,6 +296,13 @@ const App = () => {
     if (initializeCountRef.current > 0 ) {
       initializeCountRef.current = initializeCountRef.current - 1
       if (initializeCountRef.current === 0) {
+        game.header('Date', new Date().toISOString().split('T')[0])
+        game.header('Site', window.location.origin + window.location.pathname)
+        if (computerMoves === "white") {
+          game.header('White', botStrategy.botSymbol + botStrategy.botName)
+        } else {
+          game.header('Black', botStrategy.botSymbol + botStrategy.botName)
+        }
         getMoveFromStockfish(game)  // FIXME: set a variable that the next auto-iteration will pick-up to then start getting a move from stockfish
       }
     }
@@ -454,6 +461,7 @@ const App = () => {
     }
 
     const gameCopy = new Chess(game.fen()); // Clone the current game state
+    gameCopy.loadPgn(game.pgn());
 
     try {
       const structuredMove = new StructuredMove(
