@@ -110,6 +110,8 @@ const App = () => {
   const [evaluation, setEvaluation] = useState(""); // Evaluation of the position by Stockfish
   const [bestMoveArrow, setBestMoveArrow] = useState([]); // Stores arrow based on best move
   const arrowColor = "rgba(0, 0, 255, 0.6)"; // Custom arrow color
+  const initializeCountRef = useRef(null);  // count to initialize game during update game loop
+  if (initializeCountRef === null) initializeCountRef = 0;
 
   // State variables for tracking the last move's from and to squares
   const [fromSquare, setFromSquare] = useState(null); // Holds the starting square of the last move
@@ -197,7 +199,7 @@ const App = () => {
     gameMoves.current.reset()
     setMovesToPlay(gameMoves.current.value())
 
-    initializeGame() // set values from new state
+    initializeGame() // set values from new state FIXME: needs one more additional iteration
   };
 
   const startGame = (startFen = "", maxMoves = 0, preMoves = "") => {
@@ -210,10 +212,10 @@ const App = () => {
     } else {
       gameMoves.current = new GameMoves(null)
     }
-    setMovesToPlay(gameMoves.current.value())
-
-    setgameState("playing");
     setStartingFen(startFen)
+    setMovesToPlay(gameMoves.current.value())
+    setgameState("playing");
+
     if (preMoves !== "") {
       // remove newlines from preMoves string, then split by spaces and turn into moves array
       preMoves = preMoves.replace(/\n/g, " ");
@@ -258,8 +260,8 @@ const App = () => {
 
   const initializeGame = () => {
     console.debug("Initializing game ...");
-    // Initialize the game with a specific FEN string
-    getMoveFromStockfish(game)
+    // Initialize the game with a specific FEN string in 2 iterations
+    initializeCountRef.current = 2
   };
 
 
@@ -289,6 +291,13 @@ const App = () => {
   }
 
   const updateGameState = () => {
+    if (initializeCountRef.current > 0 ) {
+      initializeCountRef.current = initializeCountRef.current - 1
+      if (initializeCountRef.current === 0) {
+        getMoveFromStockfish(game)  // FIXME: set a variable that the next auto-iteration will pick-up to then start getting a move from stockfish
+      }
+    }
+
     if (gameState === "playing") {
 
 
