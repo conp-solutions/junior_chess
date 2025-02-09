@@ -625,6 +625,11 @@ const App = () => {
         <p>
           <button onClick={() => document.getElementById("fen").value = "2k5/3r4/8/8/8/8/3PR3/4K3 w - - 0 22"}>Rook♖+Pawn♙ vs Rook♖</button>
         </p>
+        <h4>Extra Games</h4>
+        <p>
+          <button onClick={() => document.getElementById("fen").value = "K7/PPPPPPPP/8/8/8/8/pppppppp/7k w - - 0 1"}>Promote♕</button>
+          <button onClick={() => document.getElementById("fen").value = "r2k4/8/8/8/8/8/PPPPPPPP/3K4 w - - 0 1"}>Rook♖ vs Pawn♙</button>
+        </p>
         <h4>Full FEN</h4>
         <p>
           <input type="text" id="fen" name="fen" placeholder="FEN string" value={urlFen} />
