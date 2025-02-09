@@ -781,7 +781,9 @@ const App = () => {
       <h1>{APPNAME} Game</h1>
       <section>
         <div id="board_tag">
-          <p>Black Time: {blackTimerString}
+          <p>
+          {game.turn() === "b" && <b>⏵⏵⏵</b>}
+          Black Time: {blackTimerString}
           {
             showEvaluation && <b> with score: {negateStockfishScore(evaluation)} </b>
           }
@@ -799,7 +801,9 @@ const App = () => {
             customArrows={showBestMove ? bestMoveArrow : undefined} // Draws the best move arrow on the board
             customArrowColor={showBestMove ? arrowColor : undefined} // Set the custom arrow color
           />
-          <p>White Time: {whiteTimerString}
+          <p>
+          {game.turn() === "w" && <b>⏵⏵⏵</b>}
+          White Time: {whiteTimerString}
           {
             showEvaluation && <b> with score: {evaluation} </b>
           }
